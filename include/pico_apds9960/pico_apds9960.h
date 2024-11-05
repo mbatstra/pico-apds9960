@@ -23,8 +23,8 @@
 #include <hardware/i2c.h>
 #include <pico/stdlib.h>
 
-#define APDS9960_SDA_PIN 1
-#define APDS9960_SCL_PIN 2
+#define APDS9960_SDA_PIN 2
+#define APDS9960_SCL_PIN 3
 
 enum {
   GESTURE_NONE = -1,
@@ -77,6 +77,7 @@ private:
 
 private:
   i2c_inst_t* _i2c_bus;
+  int32_t     _irq_pin;
 
   bool _gestureEnabled;
   bool _proximityEnabled;
@@ -149,7 +150,5 @@ private:
   REG(GFIFO_L,    0xFE)
   REG(GFIFO_R,    0xFF)
 };
-
-extern APDS9960 APDS;
 
 #endif // ARDUINO_APDS9960

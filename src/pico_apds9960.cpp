@@ -17,7 +17,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <hardware/gpio.h>
 #include "pico_apds9960/pico_apds9960.h"
+#include <iostream>
 
 APDS9960::APDS9960() :
   _gestureEnabled(false),
@@ -29,7 +31,8 @@ APDS9960::APDS9960() :
   _gestureDirInX(0),
   _gestureDirInY(0),
   _gestureSensitivity(20),
-  _detectedGesture(GESTURE_NONE)
+  _detectedGesture(GESTURE_NONE),
+  _i2c_bus(i2c1)
 {
   i2c_init(_i2c_bus, 100 * 1000);
   gpio_set_function(APDS9960_SDA_PIN, GPIO_FUNC_I2C);
@@ -61,12 +64,12 @@ bool APDS9960::begin() {
   if (!setATIME(256 - (10 / 2.78))) return false;
   // set ADC gain 4x (0x00 => 1x, 0x01 => 4x, 0x02 => 16x, 0x03 => 64x)
   if (!setCONTROL(0x02)) return false;
-  delay(10);
+  sleep_ms(10);
   // enable power
   if (!enablePower()) return false;
 
-  if (_intPin > -1) {
-    pinMode(_intPin, INPUT);
+  if (_irq_pin > -1) {
+    gpio_set_input_enabled(_irq_pin, true);
   }
 
   return true;
@@ -97,7 +100,8 @@ void APDS9960::setGestureSensitivity(uint8_t sensitivity) {
 }
 
 void APDS9960::setInterruptPin(int pin) {
-  _intPin = pin;
+  _irq_pin = pin;
+  /* set gpio func */
 }
 
 bool APDS9960::setGestureIntEnable(bool en) {
@@ -236,21 +240,19 @@ bool APDS9960::disableGesture() {
 #define APDS9960_ADDR 0x39
 
 bool APDS9960::write(uint8_t val) {
-  return i2c_write_blocking(i2c, APDS9960_ADDR, &val, 0x1, false) == 0;
+  return i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &val, 0x1, false) != PICO_ERROR_GENERIC;
 }
 
 bool APDS9960::write(uint8_t reg, uint8_t val) {
   int error = 0x0;
   error |= i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &reg, 0x1, false);
   error |= i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &val, 0x1, false);
-  return error == 0;
+  return error != PICO_ERROR_GENERIC;
 }
 
 bool APDS9960::read(uint8_t reg, uint8_t *val) {
   if (!write(reg)) {
-    return false;
-  }
-  if (!i2c_get_read_available(_i2c_bus)) {
+    std::cout << "write failed" << std::endl;
     return false;
   }
   return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, 0x1, false) != PICO_ERROR_GENERIC;
@@ -270,20 +272,6 @@ int APDS9960::gestureFIFOAvailable() {
 
 int APDS9960::handleGesture() {
   const int gestureThreshold = 30;
-inline static void fancy_write(i2c_inst_t *i2c, uint8_t addr,
-                               const uint8_t *src, size_t len, char *name) {
-  switch (i2c_write_blocking(i2c, addr, src, len, false)) {
-  case PICO_ERROR_GENERIC:
-    printf("[%s] addr not acknowledged!\n", name);
-    break;
-  case PICO_ERROR_TIMEOUT:
-    printf("[%s] timeout!\n", name);
-    break;
-  default:
-    // printf("[%s] wrote successfully %lu bytes!\n", name, len);
-    break;
-  }
-}
   while (true) {
     int available = gestureFIFOAvailable();
     if (available <= 0) return 0;
@@ -346,8 +334,8 @@ inline static void fancy_write(i2c_inst_t *i2c, uint8_t addr,
 int APDS9960::gestureAvailable() {
   if (!_gestureEnabled) enableGesture();
 
-  if (_intPin > -1) {
-    if (digitalRead(_intPin) != LOW) {
+  if (_irq_pin > -1) {
+    if (gpio_get(_irq_pin)) { /* active low */
       return 0;
     }
   } else if (gestureFIFOAvailable() <= 0) {
@@ -440,11 +428,3 @@ int APDS9960::readProximity() {
 
   return (255 - r);
 }
-
-#if defined(APDS9960_INT_PIN)
-APDS9960 APDS(APDS9960_WIRE_INSTANCE, APDS9960_INT_PIN);
-#elif defined(ARDUINO_ARDUINO_NANO33BLE)
-APDS9960 APDS(Wire1, PIN_INT_APDS);
-#else
-APDS9960 APDS(Wire, -1);
-#endif
