@@ -17,6 +17,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <bitset>
 #include <hardware/gpio.h>
 #include "pico_apds9960/pico_apds9960.h"
 #include <iostream>
@@ -240,14 +241,12 @@ bool APDS9960::disableGesture() {
 #define APDS9960_ADDR 0x39
 
 bool APDS9960::write(uint8_t val) {
-  return i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &val, 0x1, false) != PICO_ERROR_GENERIC;
+  return i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &val, 1, false) != PICO_ERROR_GENERIC;
 }
 
 bool APDS9960::write(uint8_t reg, uint8_t val) {
-  int error = 0x0;
-  error |= i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &reg, 0x1, false);
-  error |= i2c_write_blocking(_i2c_bus, APDS9960_ADDR, &val, 0x1, false);
-  return error != PICO_ERROR_GENERIC;
+  uint8_t data[2] = {reg, val};
+  return i2c_write_blocking(_i2c_bus, APDS9960_ADDR, data, 2, false) != PICO_ERROR_GENERIC;
 }
 
 bool APDS9960::read(uint8_t reg, uint8_t *val) {
@@ -255,11 +254,11 @@ bool APDS9960::read(uint8_t reg, uint8_t *val) {
     std::cout << "write failed" << std::endl;
     return false;
   }
-  return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, 0x1, false) != PICO_ERROR_GENERIC;
+  return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, 1, false) != PICO_ERROR_GENERIC;
 }
 
 size_t APDS9960::readBlock(uint8_t reg, uint8_t *val, unsigned int len) {
-  return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, len, false);
+  return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, len, false) != PICO_ERROR_GENERIC;
 }
 
 int APDS9960::gestureFIFOAvailable() {
@@ -359,18 +358,11 @@ int APDS9960::readGesture() {
 
 int APDS9960::colorAvailable() {
   uint8_t r;
-
   enableColor();
-
   if (!getSTATUS(&r)) {
     return 0;
   }
-
-  if (r & 0b00000001) {
-    return 1;
-  }
-
-  return 0;
+  return r & 0b00000001;
 }
 
 bool APDS9960::readColor(int& r, int& g, int& b) {
