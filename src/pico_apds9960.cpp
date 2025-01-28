@@ -35,11 +35,6 @@ APDS9960::APDS9960() :
   _detectedGesture(GESTURE_NONE),
   _i2c_bus(i2c1)
 {
-  i2c_init(_i2c_bus, 100 * 1000);
-  gpio_set_function(APDS9960_SDA_PIN, GPIO_FUNC_I2C);
-  gpio_set_function(APDS9960_SCL_PIN, GPIO_FUNC_I2C);
-  gpio_pull_up(APDS9960_SDA_PIN);
-  gpio_pull_up(APDS9960_SCL_PIN);
 }
 
 APDS9960::~APDS9960()
@@ -79,10 +74,7 @@ bool APDS9960::begin() {
 void APDS9960::end() {
   // Disable everything
   setENABLE(0x00);
-
   _gestureEnabled = false;
-
-  i2c_deinit(_i2c_bus);
 }
 
 // Sets the LED current boost value:
