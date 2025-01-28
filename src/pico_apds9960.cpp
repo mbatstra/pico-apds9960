@@ -33,7 +33,8 @@ APDS9960::APDS9960() :
   _gestureDirInY(0),
   _gestureSensitivity(20),
   _detectedGesture(GESTURE_NONE),
-  _i2c_bus(i2c1)
+  _i2c_bus(i2c1),
+  _irq_pin(-1)
 {
 }
 
