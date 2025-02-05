@@ -244,7 +244,7 @@ bool APDS9960::write(uint8_t reg, uint8_t val) {
 
 bool APDS9960::read(uint8_t reg, uint8_t *val) {
   if (!write(reg)) {
-    std::cout << "write failed" << std::endl;
+    printf("APDS9960: failed to write/read\n");
     return false;
   }
   return i2c_read_blocking(_i2c_bus, APDS9960_ADDR, val, 1, false) != PICO_ERROR_GENERIC;
@@ -358,13 +358,13 @@ int APDS9960::colorAvailable() {
   return r & 0b00000001;
 }
 
-bool APDS9960::readColor(int& r, int& g, int& b) {
-  int c;
+bool APDS9960::readColor(uint16_t& r, uint16_t& g, uint16_t& b) {
+  uint16_t c;
 
   return readColor(r, g, b, c);
 }
 
-bool APDS9960::readColor(int& r, int& g, int& b, int& c) {
+bool APDS9960::readColor(uint16_t& r, uint16_t& g, uint16_t& b, uint16_t& c) {
   uint16_t colors[4];
 
   if (!readCDATAL((uint8_t *)colors, sizeof(colors))) {
