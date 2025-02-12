@@ -46,8 +46,8 @@ public:
   int readGesture();
 
   int colorAvailable();
-  bool readColor(uint8_t& r, uint8_t& g, uint8_t& b);
-  bool readColor(uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& c);
+  bool readColor(uint16_t& r, uint16_t& g, uint16_t& b);
+  bool readColor(uint16_t& r, uint16_t& g, uint16_t& b, uint16_t& c);
 
   int proximityAvailable();
   int readProximity();
