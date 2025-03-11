@@ -352,6 +352,7 @@ int APDS9960::readGesture() {
 int APDS9960::colorAvailable() {
   uint8_t r;
   enableColor();
+  sleep_ms(20);  /* give status reg some time to reflect changes */
   if (!getSTATUS(&r)) {
     return 0;
   }
