@@ -387,7 +387,7 @@ int APDS9960::proximityAvailable() {
   uint8_t r;
 
   enableProximity();
-
+  sleep_ms(20);  /* give status reg some time to reflect changes */
   if (!getSTATUS(&r)) {
     return 0;
   }
