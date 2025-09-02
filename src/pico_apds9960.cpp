@@ -33,8 +33,7 @@ APDS9960::APDS9960() :
   _gestureDirInY(0),
   _gestureSensitivity(20),
   _detectedGesture(GESTURE_NONE),
-  _i2c_bus(i2c1),
-  _irq_pin(-1)
+  _irq_pin(-1),
 {
 }
 
@@ -42,7 +41,9 @@ APDS9960::~APDS9960()
 {
 }
 
-bool APDS9960::begin() {
+bool APDS9960::begin(i2c_inst_t* bus) {
+  _i2c_bus = bus;
+
   // Check ID register
   uint8_t id;
   if (!getID(&id)) return false;

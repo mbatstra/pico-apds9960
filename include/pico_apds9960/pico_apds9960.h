@@ -20,11 +20,9 @@
 #ifndef PICO_APDS9960_H
 #define PICO_APDS9960_H
 
+#include <cstdint>
 #include <hardware/i2c.h>
 #include <pico/stdlib.h>
-
-#define APDS9960_SDA_PIN 2
-#define APDS9960_SCL_PIN 3
 
 enum {
   GESTURE_NONE = -1,
@@ -39,7 +37,7 @@ public:
   APDS9960();
   virtual ~APDS9960();
 
-  bool begin();
+  bool begin(i2c_inst_t* bus);
   void end();
 
   int gestureAvailable();
